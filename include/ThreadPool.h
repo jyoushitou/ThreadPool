@@ -19,18 +19,27 @@ namespace ThreadPool
         // 唯一构造（默认创建4个线程）
         /// @brief 唯一构造
         /// @details 默认创建4个线程
-        /// @param[in] num_threads 创建的线程数
-        explicit ThreadPool(size_t num_threads = 4) : stop(0)
+        /// @param[in] threadNum 创建的线程数
+        explicit ThreadPool(size_t threadNum = 4) : stop(0)
+        {
+            // 创建线程赋值
+            this->threadNum = threadNum;
+
+            // 创建线程
+            createThread();
+        }
+
+        /// @brief 创建线程
+        /// @return 创建是否成功为返回值
+        bool createThread()
         {
             // 循环num_threads此，去创建num_threads的线程数
-            for (size_t i = 0; i < num_threads; i++)
+            for (size_t i = 0; i < threadNum; i++)
             {
                 // workers内部通过匿名函数指向私有worker函数构造子线程
                 workers.emplace_back([this] { this->worker(); });
             }
         }
-
-        bool createThread(){}
 
         // F为单个固定的模版参数，Arg为不固定数量的模版类型
         template <typename F, typename... Arg>
@@ -100,8 +109,23 @@ namespace ThreadPool
             // 逐个关闭创建的线程
             for (auto it = workers.begin(); it != workers.end(); it++)
             {
+                // 等待线程结束
                 it->join();
             }
+        }
+
+        /// @brief 设置线程数
+        /// @param theardNum 传入你想设置的大小
+        /// @return 是否修改成功
+        bool SetTheard(int threadNum)
+        {
+            // 判断是否正确
+            if (threadNum <= 0)
+            {
+                return false;
+            }
+            // 赋值
+            this->threadNum = threadNum;
         }
 
         /// @brief 析构函数
@@ -146,6 +170,8 @@ namespace ThreadPool
                 task();
             }
         }
+
+        int threadNum = 4;
 
         // 记录线程池是否停止
         std::atomic<bool> stop = false;
