@@ -33,6 +33,7 @@ namespace ThreadPool
         /// @return 创建是否成功为返回值
         bool createThread()
         {
+            stop = false;
             // 循环num_threads此，去创建num_threads的线程数
             for (size_t i = 0; i < threadNum; i++)
             {
@@ -106,7 +107,7 @@ namespace ThreadPool
                 return false;
             }
 
-            //创建线程
+            // 创建线程
             if (!createThread())
             {
                 return false;
@@ -116,7 +117,7 @@ namespace ThreadPool
         }
 
         /// @brief 用于重启时重设线程数
-        /// @param threadNum 
+        /// @param threadNum
         /// @return 返回运行状态
         bool reStart(int threadNum)
         {
@@ -132,7 +133,7 @@ namespace ThreadPool
                 return false;
             }
 
-            //创建线程
+            // 创建线程
             if (!createThread())
             {
                 return false;
@@ -165,6 +166,9 @@ namespace ThreadPool
                 // 等待线程结束
                 it->join();
             }
+
+            //清空workers
+            workers.clear();
 
             return true;
         }
