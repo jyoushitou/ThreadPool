@@ -23,7 +23,7 @@ namespace ThreadPool
         explicit ThreadPool(size_t threadNum = 4) : stop(0)
         {
             // 创建线程赋值
-            this->threadNum = threadNum;
+            setThread(threadNum);
 
             // 创建线程
             createThread();
@@ -39,6 +39,14 @@ namespace ThreadPool
                 // workers内部通过匿名函数指向私有worker函数构造子线程
                 workers.emplace_back([this] { this->worker(); });
             }
+
+            // 判断是否创建完全
+            if (workers.size() != threadNum)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         // F为单个固定的模版参数，Arg为不固定数量的模版类型
@@ -97,7 +105,7 @@ namespace ThreadPool
         }
 
         /// @brief 用于停止线程的
-        /// @return
+        /// @return 返回是否停止成功
         bool stopThread()
         {
             // 先置停止状态
@@ -112,12 +120,14 @@ namespace ThreadPool
                 // 等待线程结束
                 it->join();
             }
+
+            return true;
         }
 
         /// @brief 设置线程数
         /// @param theardNum 传入你想设置的大小
         /// @return 是否修改成功
-        bool SetTheard(int threadNum)
+        bool setThread(int threadNum)
         {
             // 判断是否正确
             if (threadNum <= 0)
