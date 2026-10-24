@@ -12,7 +12,7 @@
 namespace ThreadPool
 {
     /// @brief 线程池管理对象
-    /// @details 当前线程池创建后容量无法扩大减小；无停机函数，除非析构
+    /// @details 当前线程池创建后容量需在停止后重新设置后再创建；允许停机
     class ThreadPool
     {
     public:
@@ -94,6 +94,51 @@ namespace ThreadPool
 
             // 返回异步执行的结果
             return retfuture;
+        }
+
+        /// @brief 重启线程
+        /// @return 返回运行状态
+        bool reStart()
+        {
+            // 关闭线程
+            if (!stopThread())
+            {
+                return false;
+            }
+
+            //创建线程
+            if (!createThread())
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// @brief 用于重启时重设线程数
+        /// @param threadNum 
+        /// @return 返回运行状态
+        bool reStart(int threadNum)
+        {
+            // 关闭线程
+            if (!stopThread())
+            {
+                return false;
+            }
+
+            // 重设线程数
+            if (!setThread(threadNum))
+            {
+                return false;
+            }
+
+            //创建线程
+            if (!createThread())
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// @brief 获取消息队列长度
@@ -181,8 +226,8 @@ namespace ThreadPool
             }
         }
 
+        /// @brief 存储的线程池数量
         int threadNum = 4;
-
         // 记录线程池是否停止
         std::atomic<bool> stop = false;
         // 条件变量
