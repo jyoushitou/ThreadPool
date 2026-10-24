@@ -181,6 +181,8 @@ namespace ThreadPool
             }
             // 赋值
             this->threadNum = threadNum;
+
+            return true;
         }
 
         /// @brief 析构函数
