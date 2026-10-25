@@ -4,7 +4,7 @@
 
 void test(int i)
 {
-    std::cout << "这是test的第" << i << "个" << std::endl;
+    std::cout << "this is test function " << i << ";" << std::endl;
 }
 
 int main()
@@ -13,7 +13,11 @@ int main()
 
     for (int i = 0; i < 100; i++)
     {
-        Pool->enques([i]() { std::cout << "这是lamada的第" << i << "个" << std::endl; });
+        Pool->enques(
+            [i]()
+            {
+                std::cout << "thread is " << std::this_thread::get_id() << " this is lamada " << i << ";" << std::endl;
+            });
     }
 
     Pool->reStart();

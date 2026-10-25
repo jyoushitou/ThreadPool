@@ -7,6 +7,9 @@
 #include <queue>
 #include <future>
 #include <stdexcept>
+#include <atomic>
+#include <condition_variable>
+#include <utility>
 
 /// @brief 线程池命名空间
 namespace ThreadPool
@@ -80,7 +83,7 @@ namespace ThreadPool
                 // 判断是否线程池停止
                 if (stop)
                     // 抛出停止异常
-                    throw std::runtime_error("error:ThreadPool on off");
+                    throw std::runtime_error("error : ThreadPool on off");
                 // 将异步任务的函数名解出并加入线程队列
                 workQue.emplace(
                     [this, task]()
@@ -101,8 +104,12 @@ namespace ThreadPool
         /// @return 返回运行状态
         bool reStart()
         {
-            // 关闭线程
-            if (!stopThread())
+            try
+            {
+                // 关闭线程
+                stopThread();
+            }
+            catch (...)
             {
                 return false;
             }
@@ -117,12 +124,17 @@ namespace ThreadPool
         }
 
         /// @brief 用于重启时重设线程数
-        /// @param threadNum
+        /// @warning 在关闭线程时会有异常
+        /// @param threadNum 新设置线程数
         /// @return 返回运行状态
-        bool reStart(int threadNum)
+        bool reStart(size_t threadNum = 4)
         {
-            // 关闭线程
-            if (!stopThread())
+            try
+            {
+                // 关闭线程
+                stopThread();
+            }
+            catch (...)
             {
                 return false;
             }
@@ -152,7 +164,7 @@ namespace ThreadPool
 
         /// @brief 用于停止线程的
         /// @return 返回是否停止成功
-        bool stopThread()
+        void stopThread()
         {
             // 先置停止状态
             stop = true;
@@ -167,16 +179,14 @@ namespace ThreadPool
                 it->join();
             }
 
-            //清空workers
+            // 清空workers
             workers.clear();
-
-            return true;
         }
 
         /// @brief 设置线程数
         /// @param theardNum 传入你想设置的大小
         /// @return 是否修改成功
-        bool setThread(int threadNum)
+        bool setThread(size_t threadNum = 4)
         {
             // 判断是否正确
             if (threadNum <= 0)
@@ -233,7 +243,7 @@ namespace ThreadPool
         }
 
         /// @brief 存储的线程池数量
-        int threadNum = 4;
+        size_t threadNum = 4;
         // 记录线程池是否停止
         std::atomic<bool> stop = false;
         // 条件变量
