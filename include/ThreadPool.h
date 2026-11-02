@@ -1,3 +1,10 @@
+/// @file        ThreadPool.h
+/// @brief       线程池
+/// @author      jyoushitou
+/// @date        2026-11-02
+/// @copyright   Copyright (c) 2026
+
+
 #pragma once
 
 #include <thread>
@@ -21,7 +28,7 @@ namespace ThreadPool
     public:
         // 唯一构造（默认创建4个线程）
         /// @brief 唯一构造
-        /// @details 默认创建4个线程
+        /// @details 默认创建4个线程，且最大任务队列为线程数*400
         /// @param[in] threadNum 创建的线程数
         explicit ThreadPool(size_t threadNum = 4) : stop(0)
         {
@@ -76,6 +83,12 @@ namespace ThreadPool
             // 获取上一步打包的异步函数的结果
             std::future<functype> retfuture = task->get_future();
 
+            // 判断是否满了
+            if (maxWorkQueNum == workQueNum)
+            {
+                return retfuture;
+            }
+
             // 定义锁的作用域避免死锁
             {
                 // 为线程中调用函数加一个智能锁
@@ -91,6 +104,9 @@ namespace ThreadPool
                         // 在这里可以看出一个函数指针调用对象，同时上面bind了数据和函数名，所以可以直接用(*task)()
                         (*task)();
                     });
+
+                // 增加1
+                workQueNum++;
             }
 
             // 唤醒一个线程去执行队列拿线程和任务执行
@@ -127,7 +143,7 @@ namespace ThreadPool
         /// @warning 在关闭线程时会有异常
         /// @param threadNum 新设置线程数
         /// @return 返回运行状态
-        bool reStart(size_t threadNum = 4)
+        bool reStart(size_t threadNum)
         {
             try
             {
@@ -181,6 +197,9 @@ namespace ThreadPool
 
             // 清空workers
             workers.clear();
+
+            // 置为0
+            workQueNum = 0;
         }
 
         /// @brief 设置线程数
@@ -195,6 +214,8 @@ namespace ThreadPool
             }
             // 赋值
             this->threadNum = threadNum;
+
+            this->maxWorkQueNum = threadNum * 400;
 
             return true;
         }
@@ -235,6 +256,9 @@ namespace ThreadPool
 
                     // 出队
                     this->workQue.pop();
+
+                    // 减少队列数
+                    workQueNum--;
                 }
 
                 // 执行task
@@ -244,16 +268,21 @@ namespace ThreadPool
 
         /// @brief 存储的线程池数量
         size_t threadNum = 4;
-        // 记录线程池是否停止
+        /// @brief 记录线程池是否停止
         std::atomic<bool> stop = false;
-        // 条件变量
+        /// @brief  条件变量
         std::condition_variable cv;
-        // 互斥锁
+        /// @brief  互斥锁
         std::mutex mtx;
-        // 线程集合（线程池）
+        /// @brief  线程集合（线程池）
         std::vector<std::thread> workers;
-        // 任务队列
+
+        /// @brief  任务队列
         std::queue<std::function<void()>> workQue;
+        /// @brief 工作队列工作数
+        std::atomic<int> workQueNum;
+        /// @brief 最大工作队列数
+        int maxWorkQueNum;
     };
 
 } // namespace ThreadPool
